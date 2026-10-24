@@ -1,257 +1,104 @@
-State = React ki memory
-React ko kuch information yaad rakhni hoti hai jo time ke saath change ho sakti hai
+# Video Size Optimizer
 
-Express      → Backend server
-CORS         → Frontend ↔ Backend communication
-Multer       → Video upload
-FFprobe      → Video information
-FFmpeg       → Video compression
-Crypto       → Unique filename
-FS           → Temporary files cleanup
+A web application that helps users reduce video file sizes using FFmpeg compression, making videos easier to store and share.
 
+## Features
 
-server. js ka code phle wala
+- Upload a video for compression.
+- View the selected video's name and file size.
+- Compress videos using FFmpeg.
+- Select a target size for video compression.
+- Download the compressed video.
 
-// =====================================================
-// Dependencies
-// kya kya technologies / packages use huye hain
-// =====================================================
+## Tech Stack
 
-const express = require("express")
-const multer = require("multer")
-const ffmpeg = require("fluent-ffmpeg")
-const ffmpegPath = require("ffmpeg-static")
-const ffprobePath = require("ffprobe-static").path
-const crypto = require("crypto")
-const cors = require("cors")
-const fs = require("fs")
+### Frontend
+- React
+- Vite
+- HTML
+- CSS
+- JavaScript
 
+### Backend
+- Node.js
+- Express.js
+- Multer
+- FFmpeg
+- fluent-ffmpeg
+- ffmpeg-static
 
-// =====================================================
-// Server Configuration
-// Express app aur Multer upload setup
-// =====================================================
+## Project Structure
 
-const app = express()
+```text
+instaProject/
+├── backend/
+│   ├── server.js
+│   ├── package.json
+│   └── package-lock.json
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   ├── package.json
+│   └── vite.config.js
+├── .gitignore
+└── README.md
+```
 
-const upload = multer({
-  dest: "uploads/"
-})
+## Getting Started
 
+### Prerequisites
 
-// =====================================================
-// FFmpeg Configuration
-// FFmpeg aur FFprobe ke paths configure kar rahe hain
-// FFmpeg → video compress karega
-// FFprobe → video ki information nikalega
-// =====================================================
+Install [Node.js](https://nodejs.org/) and npm before running the project.
 
-ffmpeg.setFfmpegPath(ffmpegPath)
-ffmpeg.setFfprobePath(ffprobePath)
+### 1. Clone the Repository
 
+```bash
+git clone https://github.com/parvejhashmi19/Video-Size-Optimizer.git
+cd Video-Size-Optimizer
+```
 
-// =====================================================
-// Middleware
-// Frontend aur Backend ko communicate karne ke liye CORS
-// =====================================================
+### 2. Set Up and Run the Backend
 
-app.use(cors())
+Open a terminal in the project root and run:
 
+```bash
+cd backend
+npm install
+npm run dev
+```
 
-// =====================================================
-// Home Route
-// Backend server check karne ke liye
-// =====================================================
+The backend will start using the development script configured in `backend/package.json`.
 
-app.get("/", (req, res) => {
+### 3. Set Up and Run the Frontend
 
-  res.send("Video Size Optimizer backend is running")
+Open a **second terminal** in the project root and run:
 
-})
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
+Open the local URL displayed by Vite in your terminal.
 
-// =====================================================
-// Compress Video Route
-// User video + target size backend ko bhejta hai
-// =====================================================
+## How It Works
 
-app.post("/compress", upload.single("video"), (req, res) => {
+1. The user selects a video in the React frontend.
+2. The frontend sends the video to the Node.js and Express backend.
+3. Multer handles the uploaded video file.
+4. FFmpeg processes and compresses the video.
+5. The compressed video is made available for download.
 
-  // ---------------------------------------------------
-  // 1. Receive Uploaded Video
-  // User ne video bheji hai ya nahi check kar rahe hain
-  // ---------------------------------------------------
+## Future Improvements
 
-  if (!req.file) {
+- Add more video quality and compression options.
+- Improve error handling and the user interface.
+- Deploy the frontend and backend for public access.
 
-    return res.status(400).send("Please upload a video")
+## Author
 
-  }
+**Parvej Hashami**
 
-  console.log("Uploaded File:", req.file)
-  console.log("File Path:", req.file.path)
-  console.log("Target Size:", req.body.targetSize)
+GitHub: [parvejhashmi19](https://github.com/parvejhashmi19)
 
-
-  // ---------------------------------------------------
-  // 2. Generate Unique Output File
-  // Har user ke output video ka unique naam banega
-  // taki files ek dusre ko overwrite na karein
-  // ---------------------------------------------------
-
-  const fileName = crypto.randomBytes(8).toString("hex")
-
-  const outputPath = `compressed/${fileName}.mp4`
-
-  console.log("Output Path:", outputPath)
-
-
-  // ---------------------------------------------------
-  // 3. Get Video Duration
-  // FFprobe video ki duration nikalta hai
-  // ---------------------------------------------------
-
-  ffmpeg.ffprobe(req.file.path, (err, metadata) => {
-
-    if (err) {
-
-      console.log("FFprobe Error:", err)
-
-      return res.status(500).send(
-        "Unable to read video information"
-      )
-
-    }
-
-    const duration = metadata.format.duration
-
-    console.log("Video Duration:", duration)
-
-
-    // -------------------------------------------------
-    // 4. Calculate Required Bitrate
-    // Target size + duration se required bitrate calculate
-    // kar rahe hain
-    // -------------------------------------------------
-
-    const targetSize = Number(req.body.targetSize)
-
-    const bitrate = (targetSize * 8 * 1000) / duration
-
-    console.log("Required Bitrate:", bitrate, "k")
-
-
-    // -------------------------------------------------
-    // 5. Compress Video Using FFmpeg
-    // FFmpeg calculated bitrate ke according
-    // video ko compress karega
-    // -------------------------------------------------
-
-    ffmpeg(req.file.path)
-
-      .videoBitrate(`${bitrate}k`)
-
-      .on("end", () => {
-
-        console.log("Compression Complete")
-
-
-        // ---------------------------------------------
-        // 6. Send Compressed Video to Frontend
-        // User ko compressed video download ke liye bhej rahe hain
-        // ---------------------------------------------
-
-        res.download(
-          outputPath,
-          "compressed-video.mp4",
-          (err) => {
-
-            if (err) {
-
-              console.log("Download Error:", err)
-
-              return
-
-            }
-
-
-            // -----------------------------------------
-            // 7. Cleanup Temporary Files
-            // Download ke baad temporary files delete
-            // kar rahe hain taki server storage fill na ho
-            // -----------------------------------------
-
-            fs.unlink(req.file.path, (error) => {
-
-              if (error) {
-
-                console.log(
-                  "Upload File Cleanup Error:",
-                  error
-                )
-
-              } else {
-
-                console.log(
-                  "Temporary Upload File Deleted"
-                )
-
-              }
-
-            })
-
-
-            fs.unlink(outputPath, (error) => {
-
-              if (error) {
-
-                console.log(
-                  "Output File Cleanup Error:",
-                  error
-                )
-
-              } else {
-
-                console.log(
-                  "Compressed File Deleted"
-                )
-
-              }
-
-            })
-
-          }
-
-        )
-
-      })
-
-      .on("error", (error) => {
-
-        console.log("FFmpeg Error:", error)
-
-        res.status(500).send(
-          "Video compression failed"
-        )
-
-      })
-
-      .save(outputPath)
-
-  })
-
-})
-
-
-// =====================================================
-// Start Server
-// Backend port 5000 par run hoga
-// =====================================================
-
-app.listen(5000, () => {
-
-  console.log(
-    "Backend server started on port 5000"
-  )
-
-})
+Repository: [Video Size Optimizer](https://github.com/parvejhashmi19/Video-Size-Optimizer)
