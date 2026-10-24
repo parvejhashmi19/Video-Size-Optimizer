@@ -1,0 +1,21 @@
+
+# Dependencies
+**/node_modules/
+
+# Uploaded and compressed videos
+backend/uploads/
+backend/compressed/
+
+# Frontend build files
+frontend/dist/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Vercel settings
+.vercel/
