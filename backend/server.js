@@ -317,8 +317,9 @@ app.post("/compress", upload.single("video"), (req, res) => {
             })
           })
         })
-        .on("error", (error) => {
-          console.log(`[Compression] attempt=${attemptIndex + 1} ffmpegCompleted=false error=${error.code || error.name || "unknown"}`)
+        .on("error", (error,stdout, stderr) => {
+          console.log(`[Compression] attempt=${attemptIndex + 1} FFmpeg error:`, error.message)
+          console.log("[Compression] FFmpeg stderr:", stderr || "No stderr output")
           finishWithError(500, "Video compression failed. Please try another video or target size.")
         })
         .save(outputPath)
