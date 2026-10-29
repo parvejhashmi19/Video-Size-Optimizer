@@ -83,7 +83,7 @@ try{
       progressPollInProgress = true
       try {
         const progressResponse = await fetch(
-          `http://localhost:5000/progress/${encodeURIComponent(jobId)}`,
+          `https://video-size-optimizer.onrender.com/progress/${encodeURIComponent(jobId)}`,
           { signal: progressController.signal }
         )
 
@@ -111,7 +111,7 @@ try{
     formdata.append("jobId", jobId)
 
 // Send video to backend
-    const response = await fetch("http://localhost:5000/compress",{
+    const response = await fetch("https://video-size-optimizer.onrender.com/compress",{
       method:"POST",
       body: formdata
     })
